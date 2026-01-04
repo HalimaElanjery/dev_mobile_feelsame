@@ -1,13 +1,13 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
+jspm_packages/
 
 # Expo
 .expo/
 dist/
 web-build/
-expo-env.d.ts
 
 # Native
 .kotlin/
@@ -18,26 +18,99 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Generated native folders
+/ios
+/android
+
 # Metro
 .metro-health-check*
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
 
 # macOS
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# typescript
+# Local env files
+.env*.local
+.env
+
+# TypeScript
 *.tsbuildinfo
 
-app-example
+# Build artifacts
+build/
+out/
+coverage/
 
-# generated native folders
-/ios
-/android
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*~
+*.bak
+*.backup
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backend specific
+backend/.env
+backend/logs/
+backend/uploads/
+backend/dist/
+
+# Database backups
+*.sql.backup
+*.db.backup
+
+# Test files (temporary)
+test-*.js
+*-test-temp.js
+
+# Cache
+.cache/
+.parcel-cache/
+.npm/
+.eslintcache
+
+# Example app (if exists)
+app-example/
+# Fichiers de debug temporaires créés pendant le développement
+fix-*.js
+start-*.js
+patch-*.js
+web-test.html
+*-test.html
+
+# Documentation temporaire de debug
+*_COMPLETE.md
+*_FINAL.md
+*_RESOLU.md
+SOLUTION_*.md
+CORRECTION_*.md
+DEBUG_*.md
+PROBLEME_*.md
+VERIFICATION_*.md
+ANALYSE_*.md
+GUIDE_TEST_*.md
+TEST_*_*.md
+
+# Garder les tests essentiels
+!test-simple.js
+!test-note-management.js
+!test-complete.js
+!test-navigation.js

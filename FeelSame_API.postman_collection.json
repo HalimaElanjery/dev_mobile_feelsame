@@ -1,0 +1,617 @@
+{
+  "info": {
+    "name": "FeelSame API",
+    "description": "Collection complète des API FeelSame avec authentification automatique",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-login si pas de token",
+          "if (!pm.collectionVariables.get('token')) {",
+          "    pm.sendRequest({",
+          "        url: pm.collectionVariables.get('baseUrl') + '/auth/login',",
+          "        method: 'POST',",
+          "        header: {",
+          "            'Content-Type': 'application/json'",
+          "        },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                email: 'user1@feelsame.com',",
+          "                password: '123456'",
+          "            })",
+          "        }",
+          "    }, function (err, response) {",
+          "        if (response && response.json().success) {",
+          "            pm.collectionVariables.set('token', response.json().token);",
+          "            console.log('Token auto-récupéré');",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentification",
+      "item": [
+        {
+          "name": "Inscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Connexion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.json().success) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user1@feelsame.com\",\n  \"password\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Utilisateur Actuel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Déconnexion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Notes",
+      "item": [
+        {
+          "name": "Créer une Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.json().success) {",
+                  "    pm.collectionVariables.set('noteId', pm.response.json().note.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emotion\": \"joie\",\n  \"situation\": \"travail\",\n  \"content\": \"Test Postman - J'ai enfin décroché le poste de mes rêves ! Je suis tellement heureux de cette nouvelle opportunité.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes"]
+            }
+          }
+        },
+        {
+          "name": "Toutes les Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes?limit=10&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Notes Filtrées",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes?emotion=joie&situation=travail&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes"],
+              "query": [
+                {
+                  "key": "emotion",
+                  "value": "joie"
+                },
+                {
+                  "key": "situation",
+                  "value": "travail"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Note Spécifique",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "{{noteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Mes Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/user/me?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "user", "me"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rechercher Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/search/travail?emotion=joie&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "search", "travail"],
+              "query": [
+                {
+                  "key": "emotion",
+                  "value": "joie"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "❤️ Réactions",
+      "item": [
+        {
+          "name": "Ajouter Réaction",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reactionType\": \"heart\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reactions/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reactions", "notes", "{{noteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Réactions d'une Note",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reactions/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reactions", "notes", "{{noteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Mes Réactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reactions/notes/{{noteId}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["reactions", "notes", "{{noteId}}", "user"]
+            }
+          }
+        },
+        {
+          "name": "Notes Populaires",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reactions/popular?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reactions", "popular"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Discussions",
+      "item": [
+        {
+          "name": "Rejoindre Discussion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.json().success) {",
+                  "    pm.collectionVariables.set('discussionId', pm.response.json().discussion.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emotion\": \"joie\",\n  \"situation\": \"travail\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/discussions/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["discussions", "join"]
+            }
+          }
+        },
+        {
+          "name": "Détails Discussion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/discussions/{{discussionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["discussions", "{{discussionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Envoyer Message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Test Postman - Félicitations pour ton nouveau poste ! C'est formidable ! 🎉\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/discussions/{{discussionId}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["discussions", "{{discussionId}}", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Messages Discussion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/discussions/{{discussionId}}/messages?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["discussions", "{{discussionId}}", "messages"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Discussions Actives",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/discussions?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["discussions"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤝 Matchs",
+      "item": [
+        {
+          "name": "Demander Match",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"noteId\": \"{{noteId}}\",\n  \"message\": \"Ton message m'a vraiment touché. J'aimerais échanger avec toi sur cette expérience.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/match/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["match", "request"]
+            }
+          }
+        },
+        {
+          "name": "Demandes Reçues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/match/requests/received",
+              "host": ["{{baseUrl}}"],
+              "path": ["match", "requests", "received"]
+            }
+          }
+        },
+        {
+          "name": "Demandes Envoyées",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/match/requests/sent",
+              "host": ["{{baseUrl}}"],
+              "path": ["match", "requests", "sent"]
+            }
+          }
+        },
+        {
+          "name": "Discussions Privées",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/match/discussions",
+              "host": ["{{baseUrl}}"],
+              "path": ["match", "discussions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Administration",
+      "item": [
+        {
+          "name": "Statistiques DB",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stats/database",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "stats", "database"]
+            }
+          }
+        },
+        {
+          "name": "Statistiques Expiration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stats/expiration",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "stats", "expiration"]
+            }
+          }
+        },
+        {
+          "name": "Informations Système",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/system",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "system"]
+            }
+          }
+        },
+        {
+          "name": "Nettoyage Manuel",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "cleanup"]
+            }
+          }
+        },
+        {
+          "name": "Remplir Données (Seed)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/seed",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "seed"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Santé",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Info Serveur",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
