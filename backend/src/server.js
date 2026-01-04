@@ -21,6 +21,7 @@ const notesRoutes = require('./routes/notes');
 const discussionsRoutes = require('./routes/discussions');
 const matchRoutes = require('./routes/match');
 const reactionsRoutes = require('./routes/reactions');
+const commentsRoutes = require('./routes/comments');
 const adminRoutes = require('./routes/admin');
 
 // Créer l'application Express
@@ -91,6 +92,7 @@ app.use('/api/', limiter);
 // Routes de l'API
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
+app.use('/api/notes', commentsRoutes); // Mounts comments on /api/notes so /api/notes/:id/comments works
 app.use('/api/discussions', discussionsRoutes);
 app.use('/api/match', matchRoutes);
 app.use('/api/reactions', reactionsRoutes);

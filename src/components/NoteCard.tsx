@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { createShadowStyle } from '../utils/platformStyles';
+import { CommentsModal } from './CommentsModal';
 import { DiscussButton } from './DiscussButton';
 import { ReactionBar } from './ReactionBar';
 
@@ -34,6 +35,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
 }) => {
   const [heartCount, setHeartCount] = useState(Math.floor(Math.random() * 20) + 1);
   const [isLiked, setIsLiked] = useState(false);
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const { user } = useAuth();
 
   const formatDate = (dateString: string) => {
@@ -80,8 +82,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           <Text style={styles.emotionTag}>{emotion}</Text>
           <Text style={styles.situationTag}>{situation}</Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.heartButton, isLiked && styles.heartButtonLiked]} 
+        <TouchableOpacity
+          style={[styles.heartButton, isLiked && styles.heartButtonLiked]}
           onPress={handleLike}
         >
           <Text style={[styles.heartIcon, isLiked && styles.heartIconLiked]}>
@@ -90,32 +92,49 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           <Text style={styles.heartCount}>{heartCount}</Text>
         </TouchableOpacity>
       </View>
-      
+
       <Text style={styles.content}>{content}</Text>
-      
-      <ReactionBar 
+
+      <ReactionBar
         noteId={id}
         reactions={reactions}
         onReaction={handleReaction}
       />
-      
+
       <View style={styles.footer}>
         <Text style={styles.date}>{formatDate(createdAt)}</Text>
         <View style={styles.footerActions}>
+          {/* Bouton Discussion Privée (Seulement si pas l'auteur) */}
           {authorId && user && authorId !== user.id && (
             <DiscussButton
               noteId={id}
               noteAuthorId={authorId}
-              onRequestSent={() => {
-                // Optionnel: callback après envoi de demande
-              }}
+              onRequestSent={() => { }}
             />
           )}
+
+          {/* Bouton Commentaires (Tout le monde) */}
+          {user && (
+            <TouchableOpacity
+              style={[styles.commentButton, { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e3f2fd', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 }]}
+              onPress={() => setIsCommentsVisible(true)}
+            >
+              <Text style={{ fontSize: 16, marginRight: 4 }}>💬</Text>
+              <Text style={{ fontSize: 12, color: '#2196f3', fontWeight: '500' }}>Commenter</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-            <Text style={styles.shareButtonText}>📤 Partager</Text>
+            <Text style={styles.shareButtonText}>📤</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      <CommentsModal
+        visible={isCommentsVisible}
+        onClose={() => setIsCommentsVisible(false)}
+        noteId={id}
+      />
     </View>
   );
 };
@@ -200,6 +219,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  commentButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#fff3e0',
   },
   shareButton: {
     paddingHorizontal: 12,
