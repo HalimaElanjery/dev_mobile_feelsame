@@ -1,176 +1,41 @@
 /**
- * Routes d'authentification
+ * Routes d'authentification (Adaptées pour Firebase)
+ * La plupart de la logique de login/register est maintenant gérée par le client Firebase.
+ * Ces routes servent principalement à synchroniser/récupérer le profil.
  */
 
 const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { query, generateUUID } = require('../config/database');
+const { query } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
 /**
- * Inscription d'un nouvel utilisateur
+ * Inscription / Connexion (Géré par middleware authenticateToken + Firebase)
+ * Cette route 'login' pourrait être utilisée pour renvoyer des info sup si besoin,
+ * mais avec Firebase, le client login directement sur Firebase, puis appelle /me ou une route protégée.
+ * 
+ * Pour compatibilité avec l'existant, on peut garder /me pour récupérer le profil complet.
  */
-router.post('/register', async (req, res) => {
-  try {
-    const { email, password } = req.body;
 
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'Email et mot de passe requis'
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        error: 'Le mot de passe doit contenir au moins 6 caractères'
-      });
-    }
-
-    // Vérifier si l'email existe déjà
-    const existingUser = await query(
-      'SELECT id FROM users WHERE email = ?',
-      [email.toLowerCase().trim()]
-    );
-
-    if (existingUser.length > 0) {
-      return res.status(409).json({
-        error: 'Cet email est déjà utilisé'
-      });
-    }
-
-    // Hasher le mot de passe
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Créer l'utilisateur
-    const userId = generateUUID();
-    await query(
-      'INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)',
-      [userId, email.toLowerCase().trim(), passwordHash]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Utilisateur créé avec succès'
-    });
-
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      error: 'Erreur lors de l\'inscription'
-    });
-  }
-});
-
-/**
- * Connexion d'un utilisateur
- */
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'Email et mot de passe requis'
-      });
-    }
-
-    // Récupérer l'utilisateur
-    const users = await query(
-      'SELECT id, email, password_hash FROM users WHERE email = ? AND is_active = TRUE',
-      [email.toLowerCase().trim()]
-    );
-
-    if (users.length === 0) {
-      return res.status(401).json({
-        error: 'Email ou mot de passe incorrect'
-      });
-    }
-
-    const user = users[0];
-
-    // Vérifier le mot de passe
-    const passwordValid = await bcrypt.compare(password, user.password_hash);
-    if (!passwordValid) {
-      return res.status(401).json({
-        error: 'Email ou mot de passe incorrect'
-      });
-    }
-
-    // Générer le token JWT
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'feelsame_super_secret_jwt_key_2024_development',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    // Sauvegarder la session (optionnel)
-    const sessionId = generateUUID();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 jours
-
-    await query(
-      'INSERT INTO user_sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)',
-      [sessionId, user.id, token, expiresAt]
-    );
-
-    res.json({
-      success: true,
-      data: {
-        token,
-        user: {
-          id: user.id,
-          email: user.email
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la connexion'
-    });
-  }
-});
-
-/**
- * Déconnexion (invalider le token)
- */
-router.post('/logout', authenticateToken, async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (token) {
-      // Désactiver la session
-      await query(
-        'UPDATE user_sessions SET is_active = FALSE WHERE token_hash = ?',
-        [token]
-      );
-    }
-
-    res.json({
-      success: true,
-      message: 'Déconnexion réussie'
-    });
-
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la déconnexion'
-    });
-  }
-});
+// Route de login "legacy" désactivée ou adaptée
+// Si le front appelle encore /login, ça va échouer car il n'envoie pas token Firebase.
+// Le front a été migré pour utiliser Firebase Auth directement.
 
 /**
  * Vérifier le token et récupérer l'utilisateur actuel
+ * C'est la route principale appelée après le login Firebase sur le front.
  */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
+    // req.user est déjà peuplé par le middleware authenticateToken (qui utilise verifyFirebaseToken)
+    // verifyFirebaseToken s'assure que l'utilisateur existe en DB (sync)
+
+    // On peut renvoyer les infos
+    if (!req.user || !req.user.userId) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const users = await query(
       'SELECT id, email, created_at FROM users WHERE id = ? AND is_active = TRUE',
       [req.user.userId]
@@ -193,6 +58,22 @@ router.get('/me', authenticateToken, async (req, res) => {
       error: 'Erreur lors de la récupération de l\'utilisateur'
     });
   }
+});
+
+// Les routes /register et /login classiques ne sont plus nécessaires 
+// car l'auth se fait côté client direct avec Firebase.
+// Cependant, pour éviter des 404 si le front n'est pas 100% migré :
+router.post('/login', (req, res) => {
+  res.status(400).json({ error: "Please use Firebase Auth on client side" });
+});
+
+router.post('/register', (req, res) => {
+  res.status(400).json({ error: "Please use Firebase Auth on client side" });
+});
+
+router.post('/logout', (req, res) => {
+  // Logout is client side essentially, but we can return success
+  res.json({ success: true });
 });
 
 module.exports = router;

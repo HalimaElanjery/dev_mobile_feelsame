@@ -318,11 +318,11 @@ router.get('/discussions', authenticateToken, async (req, res) => {
       FROM private_discussions pd
       LEFT JOIN notes n ON pd.note_id = n.id
       LEFT JOIN private_messages pm ON pd.id = pm.discussion_id
-      WHERE (pd.user1_id = ? OR pd.user2_id = ?) AND pd.is_active = TRUE AND pd.expires_at > ?
+      WHERE (pd.user1_id = ? OR pd.user2_id = ?) AND pd.is_active = TRUE
       GROUP BY pd.id, pd.user1_id, pd.user2_id, pd.note_id, pd.created_at, pd.expires_at, pd.is_active,
                n.emotion, n.situation, n.content
       ORDER BY last_message_at DESC, pd.created_at DESC
-    `, [userId, userId, new Date()]);
+    `, [userId, userId]);
 
     console.log('🔍 Filtered discussions found:', discussions.length);
     if (discussions.length > 0) {
@@ -332,7 +332,7 @@ router.get('/discussions', authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      discussions
+      data: discussions
     });
 
   } catch (error) {

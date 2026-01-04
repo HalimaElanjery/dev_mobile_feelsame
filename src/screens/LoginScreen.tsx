@@ -5,17 +5,17 @@
 
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/Input';
+import { useAuth } from '../context/AuthContext';
 import { createShadowStyle } from '../utils/platformStyles';
 
 interface LoginScreenProps {
@@ -29,7 +29,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const validateForm = (): boolean => {
     let isValid = true;
@@ -69,6 +69,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       Alert.alert('Erreur', 'Une erreur est survenue');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      console.log('🔘 Google button pressed in LoginScreen');
+      const result = await loginWithGoogle();
+      if (result.success) {
+        // La navigation sera gérée automatiquement
+        console.log('✅ Google login flow initiated/success');
+      } else {
+        console.error('❌ Google login error:', result.error);
+        Alert.alert('Erreur Google', result.error || 'Erreur lors de la connexion Google');
+      }
+    } catch (error) {
+      console.error('❌ Google login exception:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue avec Google');
+    } finally {
+      if (Platform.OS !== 'web') {
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -112,6 +136,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             >
               <Text style={styles.buttonText}>
                 {loading ? 'Connexion...' : 'Se connecter'}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.separatorContainer}>
+              <View style={styles.separatorLine} />
+              <Text style={styles.separatorText}>OU</Text>
+              <View style={styles.separatorLine} />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.googleButton, loading && styles.buttonDisabled]}
+              onPress={handleGoogleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.googleButtonText}>
+                Se connecter avec Google
               </Text>
             </TouchableOpacity>
 
@@ -177,6 +217,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  googleButton: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  googleButtonText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  separatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#eee',
+  },
+  separatorText: {
+    marginHorizontal: 10,
+    color: '#999',
+    fontSize: 14,
+  },
   registerLink: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -192,4 +261,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
