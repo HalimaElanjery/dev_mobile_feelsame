@@ -84,6 +84,19 @@ const transformPrivateDiscussionData = (discussion: any): PrivateDiscussion => {
 };
 
 /**
+ * Transforme les données de message privé de l'API (snake_case) vers le format frontend (camelCase)
+ */
+const transformPrivateMessageData = (message: any): PrivateMessage => {
+  return {
+    id: message.id,
+    discussionId: message.discussion_id,
+    userId: message.user_id,
+    content: message.content,
+    createdAt: message.created_at
+  };
+};
+
+/**
  * Envoie une demande de match pour discuter avec l'auteur d'une note
  */
 export const sendMatchRequest = async (
@@ -259,12 +272,12 @@ export const addPrivateMessage = async (
   content: string
 ): Promise<PrivateMessage> => {
   try {
-    const response: ApiResponse<PrivateMessage> = await apiPost(`/match/discussions/${discussionId}/messages`, {
+    const response: ApiResponse<any> = await apiPost(`/match/discussions/${discussionId}/messages`, {
       content
     });
 
     if (response.success && response.data) {
-      return response.data;
+      return transformPrivateMessageData(response.data);
     }
 
     throw new Error(response.error || 'Erreur lors de l\'envoi du message');
@@ -283,14 +296,14 @@ export const getPrivateMessagesByDiscussion = async (discussionId: string, optio
   since?: string;
 } = {}): Promise<PrivateMessage[]> => {
   try {
-    const response: ApiResponse<PrivateMessage[]> = await apiGet(`/match/discussions/${discussionId}/messages`, {
+    const response: ApiResponse<any[]> = await apiGet(`/match/discussions/${discussionId}/messages`, {
       limit: options.limit || 50,
       offset: options.offset || 0,
       since: options.since
     });
 
     if (response.success && response.data) {
-      return response.data;
+      return response.data.map(transformPrivateMessageData);
     }
 
     return [];

@@ -1,13 +1,9 @@
-/**
- * Composant NoteCard
- * Carte affichant une note émotionnelle anonyme avec réactions
- */
-
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { createShadowStyle } from '../utils/platformStyles';
+import { useTheme } from '../context/ThemeContext';
+import { Card } from './Card';
 import { CommentsModal } from './CommentsModal';
 import { DiscussButton } from './DiscussButton';
 import { ReactionBar } from './ReactionBar';
@@ -18,7 +14,7 @@ interface NoteCardProps {
   emotion: string;
   situation: string;
   createdAt: string;
-  authorId?: string; // ID de l'auteur de la note
+  authorId?: string;
   reactions?: { [key: string]: number };
   onReaction?: (noteId: string, emoji: string) => void;
 }
@@ -37,20 +33,22 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   const [isLiked, setIsLiked] = useState(false);
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
-    return date.toLocaleDateString('fr-FR');
+    // Si moins de 24h, format relatif
+    if (diffMs < 86400000) {
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'À l\'instant';
+      if (diffMins < 60) return `${diffMins} min`;
+      const diffHours = Math.floor(diffMs / 3600000);
+      return `${diffHours}h`;
+    }
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
   const handleLike = async () => {
@@ -63,48 +61,67 @@ export const NoteCard: React.FC<NoteCardProps> = ({
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       await Share.share({
-        message: `Une personne partage son ressenti sur FeelSame:\n\n"${content}"\n\n#${emotion} #${situation}`,
-        title: 'Partage FeelSame',
+        message: `FeelSame: "${content}" #${emotion}`,
       });
     } catch (error) {
-      console.error('Erreur lors du partage:', error);
+      console.error(error);
     }
   };
 
-  const handleReaction = (emoji: string) => {
-    onReaction?.(id, emoji);
+  // Couleurs dynamiques pour les tags
+  const getTagColor = (text: string) => {
+    // Simple hash pour couleur stable
+    const hash = text.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
+    const hues = [200, 280, 340, 40, 160]; // Bleu, Violet, Rose, Orange, Vert
+    const hue = hues[hash % hues.length];
+    return {
+      bg: `hsla(${hue}, 80%, ${isDark ? '20%' : '92%'}, 1)`,
+      text: `hsla(${hue}, 80%, ${isDark ? '70%' : '40%'}, 1)`
+    };
   };
 
+  const emotionColors = getTagColor(emotion);
+  const situationColors = getTagColor(situation);
+
   return (
-    <View style={styles.card}>
+    <Card variant="elevated" padding={20} style={styles.cardMargin}>
+      {/* Header: Tags & Like */}
       <View style={styles.header}>
         <View style={styles.tags}>
-          <Text style={styles.emotionTag}>{emotion}</Text>
-          <Text style={styles.situationTag}>{situation}</Text>
+          <View style={[styles.tag, { backgroundColor: emotionColors.bg }]}>
+            <Text style={[styles.tagText, { color: emotionColors.text }]}>#{emotion}</Text>
+          </View>
+          <View style={[styles.tag, { backgroundColor: situationColors.bg }]}>
+            <Text style={[styles.tagText, { color: situationColors.text }]}>{situation}</Text>
+          </View>
         </View>
+
         <TouchableOpacity
-          style={[styles.heartButton, isLiked && styles.heartButtonLiked]}
+          style={[styles.heartButton, { backgroundColor: isLiked ? '#FFEBEE' : (isDark ? '#2C2C35' : '#F7F9FC') }]}
           onPress={handleLike}
         >
-          <Text style={[styles.heartIcon, isLiked && styles.heartIconLiked]}>
-            {isLiked ? '❤️' : '🤍'}
-          </Text>
-          <Text style={styles.heartCount}>{heartCount}</Text>
+          <Text style={{ fontSize: 14 }}>{isLiked ? '❤️' : '🤍'}</Text>
+          <Text style={[styles.heartCount, { color: colors.textSecondary }]}>{heartCount}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.content}>{content}</Text>
+      {/* Content */}
+      <Text style={[styles.content, { color: colors.text }]}>{content}</Text>
 
-      <ReactionBar
-        noteId={id}
-        reactions={reactions}
-        onReaction={handleReaction}
-      />
+      {/* Reactions Bar */}
+      <View style={{ marginVertical: 12 }}>
+        <ReactionBar
+          noteId={id}
+          reactions={reactions}
+          onReaction={(emoji) => onReaction?.(id, emoji)}
+        />
+      </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.date}>{formatDate(createdAt)}</Text>
+      {/* Footer: Date & Actions */}
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
+        <Text style={[styles.date, { color: colors.textSecondary }]}>{formatDate(createdAt)}</Text>
+
         <View style={styles.footerActions}>
-          {/* Bouton Discussion Privée (Seulement si pas l'auteur) */}
           {authorId && user && authorId !== user.id && (
             <DiscussButton
               noteId={id}
@@ -113,19 +130,21 @@ export const NoteCard: React.FC<NoteCardProps> = ({
             />
           )}
 
-          {/* Bouton Commentaires (Tout le monde) */}
           {user && (
             <TouchableOpacity
-              style={[styles.commentButton, { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e3f2fd', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 }]}
+              style={[styles.actionButton, { backgroundColor: isDark ? '#3A3A45' : '#F0F4FF' }]}
               onPress={() => setIsCommentsVisible(true)}
             >
-              <Text style={{ fontSize: 16, marginRight: 4 }}>💬</Text>
-              <Text style={{ fontSize: 12, color: '#2196f3', fontWeight: '500' }}>Commenter</Text>
+              <Text style={{ fontSize: 14 }}>💬</Text>
+              <Text style={[styles.actionText, { color: colors.primary }]}>Commenter</Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-            <Text style={styles.shareButtonText}>📤</Text>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: 'transparent' }]}
+            onPress={handleShare}
+          >
+            <Text style={{ fontSize: 16 }}>📤</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -135,107 +154,85 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         onClose={() => setIsCommentsVisible(false)}
         noteId={id}
       />
-    </View>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    ...createShadowStyle(),
+  cardMargin: {
+    marginHorizontal: 4,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   tags: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     flex: 1,
+    marginRight: 8,
   },
-  emotionTag: {
-    backgroundColor: '#e3f2fd',
-    color: '#2196f3',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontSize: 12,
-    fontWeight: '600',
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
   },
-  situationTag: {
-    backgroundColor: '#f3e5f5',
-    color: '#9c27b0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  tagText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   heartButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  heartButtonLiked: {
-    backgroundColor: '#ffe6e6',
-  },
-  heartIcon: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  heartIconLiked: {
-    transform: [{ scale: 1.2 }],
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
   },
   heartCount: {
     fontSize: 12,
-    color: '#666',
     fontWeight: '600',
   },
   content: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#333',
+    fontSize: 17,
+    lineHeight: 26,
+    fontWeight: '400',
     marginBottom: 8,
+    letterSpacing: 0.2,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 1,
     marginTop: 8,
   },
   date: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 11,
+    fontWeight: '500',
   },
   footerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  commentButton: {
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#fff3e0',
+    paddingVertical: 8,
+    borderRadius: 14,
+    gap: 6,
   },
-  shareButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f0f0f0',
-  },
-  shareButtonText: {
+  actionText: {
     fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
+    fontWeight: '600',
+  }
 });
 

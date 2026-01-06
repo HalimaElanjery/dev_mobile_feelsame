@@ -190,8 +190,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
+      // Forcer la mise à jour locale pour une UX instantanée
+      // Le listener onAuthStateChanged le fera aussi, mais ça garantit la déconnexion visuelle
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      // En cas d'erreur Firebase, on déconnecte quand même localement
+      setUser(null);
     }
   };
 

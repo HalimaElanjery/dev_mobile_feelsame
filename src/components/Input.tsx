@@ -3,20 +3,13 @@
  * Champ de saisie stylisé pour l'application
  */
 
-import React from 'react';
-import { TextInput, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
-interface InputProps {
+interface InputProps extends TextInputProps {
   label?: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  secureTextEntry?: boolean;
-  multiline?: boolean;
-  numberOfLines?: number;
   error?: string;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -24,67 +17,83 @@ export const Input: React.FC<InputProps> = ({
   value,
   onChangeText,
   placeholder,
-  secureTextEntry = false,
-  multiline = false,
-  numberOfLines = 1,
+  secureTextEntry,
+  multiline,
+  numberOfLines,
   error,
-  autoCapitalize = 'none',
-  keyboardType = 'default',
+  autoCapitalize,
+  keyboardType,
+  style,
+  ...props
 }) => {
+  const { colors, isDark } = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
     <View style={styles.container}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label && (
+        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+      )}
+
       <TextInput
         style={[
           styles.input,
+          {
+            backgroundColor: isFocused ? (isDark ? '#2C2C35' : '#FFF') : (isDark ? '#1F1F25' : '#F7F9FC'),
+            borderColor: error ? colors.error : (isFocused ? colors.primary : colors.border),
+            color: colors.text,
+            borderWidth: isFocused || error ? 1.5 : 1,
+          },
           multiline && styles.inputMultiline,
-          error && styles.inputError,
+          style
         ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#999"
+        placeholderTextColor={colors.textSecondary}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
         numberOfLines={numberOfLines}
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        {...props}
       />
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#333',
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    backgroundColor: '#fff',
-    minHeight: 48,
+    minHeight: 56,
   },
   inputMultiline: {
-    minHeight: 100,
+    minHeight: 120,
     textAlignVertical: 'top',
-  },
-  inputError: {
-    borderColor: '#e74c3c',
+    paddingTop: 16,
   },
   errorText: {
-    color: '#e74c3c',
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 6,
+    marginLeft: 4,
+    fontWeight: '500',
   },
 });
 

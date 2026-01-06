@@ -17,8 +17,11 @@ import { EmotionSelectionScreen } from '../screens/EmotionSelectionScreen';
 import { EmotionSpaceScreen } from '../screens/EmotionSpaceScreen';
 import { FeedbackScreen } from '../screens/FeedbackScreen';
 import { LoginScreen } from '../screens/LoginScreen';
+import { MatchRequestsScreen } from '../screens/MatchRequestsScreen';
 import { MyNotesScreen } from '../screens/MyNotesScreen';
 import { PrivateChatScreen } from '../screens/PrivateChatScreen';
+import { PrivateDiscussionsScreen } from '../screens/PrivateDiscussionsScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { WriteNoteScreen } from '../screens/WriteNoteScreen';
 import { TabNavigator } from './TabNavigator';
@@ -35,6 +38,9 @@ export type RootStackParamList = {
   Feedback: undefined;
   MyNotes: undefined;
   PrivateChat: { discussionId: string };
+  MatchRequests: undefined;
+  PrivateDiscussions: undefined;
+  Profile: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -42,7 +48,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 // Stack d'authentification (Login, Register)
 const AuthStack = () => {
   const { colors } = useTheme();
-  
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -59,7 +65,7 @@ const AuthStack = () => {
 // Stack principal de l'application (après authentification)
 const AppStack = () => {
   const { colors } = useTheme();
-  
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -82,7 +88,7 @@ const AppStack = () => {
         component={TabNavigator}
         options={{ headerShown: false }}
       />
-      
+
       {/* Écrans modaux et secondaires */}
       <Stack.Screen
         name="MyNotes"
@@ -92,7 +98,7 @@ const AppStack = () => {
       <Stack.Screen
         name="EmotionSelection"
         component={EmotionSelectionScreen}
-        options={{ 
+        options={{
           title: 'Choisir une émotion',
           presentation: 'modal',
         }}
@@ -100,7 +106,7 @@ const AppStack = () => {
       <Stack.Screen
         name="ActionSelection"
         component={ActionSelectionScreen}
-        options={{ 
+        options={{
           title: 'Que souhaitez-vous faire ?',
           presentation: 'modal',
         }}
@@ -108,7 +114,7 @@ const AppStack = () => {
       <Stack.Screen
         name="WriteNote"
         component={WriteNoteScreen}
-        options={{ 
+        options={{
           title: 'Écrire une note',
           presentation: 'modal',
         }}
@@ -121,7 +127,7 @@ const AppStack = () => {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
-        options={{ 
+        options={{
           title: 'Discussion de groupe',
           headerBackTitle: 'Retour',
         }}
@@ -129,7 +135,7 @@ const AppStack = () => {
       <Stack.Screen
         name="PrivateChat"
         component={PrivateChatScreen}
-        options={{ 
+        options={{
           title: 'Discussion privée',
           headerBackTitle: 'Retour',
         }}
@@ -137,9 +143,27 @@ const AppStack = () => {
       <Stack.Screen
         name="Feedback"
         component={FeedbackScreen}
-        options={{ 
+        options={{
           title: 'Feedback',
           headerBackTitle: 'Retour',
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="MatchRequests"
+        component={MatchRequestsScreen}
+        options={{ title: 'Demandes de match' }}
+      />
+      <Stack.Screen
+        name="PrivateDiscussions"
+        component={PrivateDiscussionsScreen}
+        options={{ title: 'Discussions privées' }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          title: 'Mon Profil',
           presentation: 'modal',
         }}
       />
@@ -150,7 +174,7 @@ const AppStack = () => {
 // Écran de chargement
 const LoadingScreen = () => {
   const { colors } = useTheme();
-  
+
   return (
     <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
       <ActivityIndicator size="large" color={colors.primary} />

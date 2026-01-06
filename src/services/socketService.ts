@@ -51,9 +51,9 @@ class SocketService {
 
       // Utiliser l'URL de base sans /api pour Socket.IO
       const socketUrl = API_CONFIG.BASE_URL.replace('/api', '');
-      
+
       console.log('Connecting to Socket.IO:', socketUrl);
-      
+
       this.socket = io(socketUrl, {
         auth: {
           token
@@ -96,14 +96,28 @@ class SocketService {
     });
 
     // Événements de messages
-    this.socket.on('message-received', (message: Message) => {
-      console.log('📨 Message received:', message);
-      this.notifyMessageCallbacks(message);
+    this.socket.on('message-received', (message: any) => {
+      console.log('📨 Message received (raw):', message);
+      const formattedMessage: Message = {
+        id: message.id,
+        discussionId: message.discussionId || message.discussion_id,
+        userId: message.userId || message.user_id,
+        content: message.content,
+        createdAt: message.createdAt || message.created_at
+      };
+      this.notifyMessageCallbacks(formattedMessage);
     });
 
-    this.socket.on('private-message-received', (message: PrivateMessage) => {
-      console.log('🔒 Private message received:', message);
-      this.notifyPrivateMessageCallbacks(message);
+    this.socket.on('private-message-received', (message: any) => {
+      console.log('🔒 Private message received (raw):', message);
+      const formattedMessage: PrivateMessage = {
+        id: message.id,
+        discussionId: message.discussionId || message.discussion_id,
+        userId: message.userId || message.user_id,
+        content: message.content,
+        createdAt: message.createdAt || message.created_at
+      };
+      this.notifyPrivateMessageCallbacks(formattedMessage);
     });
 
     // Événements de frappe
@@ -186,7 +200,7 @@ class SocketService {
    */
   onMessage(callback: (message: Message) => void): () => void {
     this.messageCallbacks.push(callback);
-    
+
     // Retourne une fonction pour supprimer le callback
     return () => {
       const index = this.messageCallbacks.indexOf(callback);
@@ -201,7 +215,7 @@ class SocketService {
    */
   onPrivateMessage(callback: (message: PrivateMessage) => void): () => void {
     this.privateMessageCallbacks.push(callback);
-    
+
     return () => {
       const index = this.privateMessageCallbacks.indexOf(callback);
       if (index > -1) {
@@ -215,7 +229,7 @@ class SocketService {
    */
   onTyping(callback: (data: { userId: string; isTyping: boolean }) => void): () => void {
     this.typingCallbacks.push(callback);
-    
+
     return () => {
       const index = this.typingCallbacks.indexOf(callback);
       if (index > -1) {
@@ -229,7 +243,7 @@ class SocketService {
    */
   onConnectionChange(callback: (connected: boolean) => void): () => void {
     this.connectionCallbacks.push(callback);
-    
+
     return () => {
       const index = this.connectionCallbacks.indexOf(callback);
       if (index > -1) {
