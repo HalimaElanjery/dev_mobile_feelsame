@@ -5,47 +5,19 @@
 
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { EmotionButton } from '../components/EmotionButton';
+import { EMOTIONS, SITUATIONS } from '../constants/emotions';
 import { useEmotion } from '../context/EmotionContext';
 
 interface EmotionSelectionScreenProps {
   navigation: any;
 }
-
-const EMOTIONS = [
-  { id: 'joy', label: 'Joie', emoji: '😊' },
-  { id: 'sadness', label: 'Tristesse', emoji: '😢' },
-  { id: 'anger', label: 'Colère', emoji: '😠' },
-  { id: 'fear', label: 'Peur', emoji: '😨' },
-  { id: 'anxiety', label: 'Anxiété', emoji: '😰' },
-  { id: 'love', label: 'Amour', emoji: '❤️' },
-  { id: 'disappointment', label: 'Déception', emoji: '😞' },
-  { id: 'hope', label: 'Espoir', emoji: '✨' },
-  { id: 'loneliness', label: 'Solitude', emoji: '😔' },
-  { id: 'gratitude', label: 'Gratitude', emoji: '🙏' },
-];
-
-const SITUATIONS = [
-  'Travail',
-  'Études',
-  'Relations',
-  'Famille',
-  'Santé',
-  'Finances',
-  'Projet personnel',
-  'Transition de vie',
-  'Perte',
-  'Célébration',
-  'Décision importante',
-  'Conflit',
-  'Autre',
-];
 
 export const EmotionSelectionScreen: React.FC<EmotionSelectionScreenProps> = ({
   navigation,
@@ -97,20 +69,20 @@ export const EmotionSelectionScreen: React.FC<EmotionSelectionScreenProps> = ({
           <View style={styles.situationsGrid}>
             {SITUATIONS.map((situation) => (
               <TouchableOpacity
-                key={situation}
+                key={situation.id}
                 style={[
                   styles.situationButton,
-                  selectedSituation === situation && styles.situationButtonSelected,
+                  selectedSituation === situation.id && styles.situationButtonSelected,
                 ]}
-                onPress={() => setSelectedSituation(situation)}
+                onPress={() => setSelectedSituation(situation.id)}
               >
                 <Text
                   style={[
                     styles.situationText,
-                    selectedSituation === situation && styles.situationTextSelected,
+                    selectedSituation === situation.id && styles.situationTextSelected,
                   ]}
                 >
-                  {situation}
+                  {situation.label}
                 </Text>
               </TouchableOpacity>
             ))}

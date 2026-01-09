@@ -6,18 +6,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { EMOTIONS, SITUATIONS } from '../../constants/emotions';
+import { EMOTIONS, SITUATIONS } from '../constants/emotions';
 import { useAuth } from '../context/AuthContext';
 import { Note, deleteNote, getNotesByUser, updateNote } from '../services/noteService';
 
@@ -122,7 +122,7 @@ export const MyNotesScreen: React.FC<MyNotesScreenProps> = ({ navigation }) => {
     const confirmed = window.confirm(
       'Êtes-vous sûr de vouloir supprimer cette note ? Cette action est irréversible.'
     );
-    
+
     if (confirmed) {
       handleDeleteNote(note);
     }
